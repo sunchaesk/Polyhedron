@@ -220,6 +220,30 @@ polyhedron/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/build
 .PHONY : polyhedron/fast
 
+src/affineGen.o: src/affineGen.cpp.o
+.PHONY : src/affineGen.o
+
+# target to build an object file
+src/affineGen.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/affineGen.cpp.o
+.PHONY : src/affineGen.cpp.o
+
+src/affineGen.i: src/affineGen.cpp.i
+.PHONY : src/affineGen.i
+
+# target to preprocess a source file
+src/affineGen.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/affineGen.cpp.i
+.PHONY : src/affineGen.cpp.i
+
+src/affineGen.s: src/affineGen.cpp.s
+.PHONY : src/affineGen.s
+
+# target to generate assembly for a file
+src/affineGen.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/affineGen.cpp.s
+.PHONY : src/affineGen.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -244,6 +268,30 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/old.o: src/old.cpp.o
+.PHONY : src/old.o
+
+# target to build an object file
+src/old.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/old.cpp.o
+.PHONY : src/old.cpp.o
+
+src/old.i: src/old.cpp.i
+.PHONY : src/old.i
+
+# target to preprocess a source file
+src/old.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/old.cpp.i
+.PHONY : src/old.cpp.i
+
+src/old.s: src/old.cpp.s
+.PHONY : src/old.s
+
+# target to generate assembly for a file
+src/old.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/old.cpp.s
+.PHONY : src/old.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -260,9 +308,15 @@ help:
 	@echo "... intrinsics_gen"
 	@echo "... omp_gen"
 	@echo "... polyhedron"
+	@echo "... src/affineGen.o"
+	@echo "... src/affineGen.i"
+	@echo "... src/affineGen.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/old.o"
+	@echo "... src/old.i"
+	@echo "... src/old.s"
 .PHONY : help
 
 

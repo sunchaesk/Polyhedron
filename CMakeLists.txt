@@ -15,9 +15,11 @@ include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${CLANG_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
+# all cpp files in src/
+file(GLOB SOURCES "src/*.cpp")
 
 # Add executable
-add_executable(polyhedron src/main.cpp)
+add_executable(polyhedron ${SOURCES})
 
 # Map the LLVM components to the libraries
 llvm_map_components_to_libnames(LLVM_LIBS support core irreader)
