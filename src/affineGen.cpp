@@ -220,16 +220,26 @@ bool AffineCheckerVisitor::isAffineInit(clang::Stmt *Init){
       }
     }
   }
-  // if (clang::BinaryOperator * BO = llvm::dyn_cast<clang::BinaryOperator>(Init)){
-  //   if (BO->getOpcode() == clang::BO_Assign){
-  //     clang::Expr * LHS = BO->getLHS();
-  //     clang::Expr * RHS = BO->getRHS();
-  //     // check if LHS is loop var
-  //     if (clang::DeclRefExpr * LHSDecl = llvm::dyn_cast<clang::DeclRefExpr>(LHS)){
+  // catching the cases where init is not the first time the loop variable is being declared
+  else if (clang::BinaryOperator *BO = llvm::dyn_cast<clang::BinaryOperator>(Init)){
+    if (BO->getOpcode() == clang::BO_Assign) {
+      clang::Expr * LHS = BO->getLHS();
+      clang::Expr * RHS = BO->getRHS();
+      // NOTE: Code could check if the LHS variable is a previously defined loop var
+      // but if started catching weird cases like that, then it would be too much
+      if (clang::DeclRefExpr *DR = llvm::dyn_cast<clang::DeclRefExpr>(LHS)){
+        clang::QualType VarType = DR->getType();
+        std::string loopVarName = DR->getNameInfo().getName().getAsString();
+        this->encounteredLoopVars.insert(loopVarName);
 
-  //     }
-  //   }
-  // }
+        if (!VarType->isIntegerType()){
+          return false;
+        }
+
+        return isAffineArithExpr(RHS);
+      }
+    }
+  }
   return true;
 }
 
