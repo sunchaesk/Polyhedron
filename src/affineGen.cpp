@@ -141,7 +141,14 @@ bool AffineCheckerVisitor::isAffineArithExpr(clang::Expr * InitExpr){
             if (clang::DeclRefExpr *DR = llvm::dyn_cast<clang::DeclRefExpr>(LHS)) {
               if (clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(DR->getDecl())) {
                 std::string LHSVarName = VD->getNameAsString();
-                if (encounteredLoopVars.find(LHSVarName) == encounteredLoopVars.end()) {
+                // llvm::errs() << "======================\n";
+                // llvm::errs() << "145 " << LHSVarName << "\n";
+                // for (const auto& element : encounteredLoopVars){
+                //   llvm::errs() << element << "\n";
+                // }
+                // if LHSVarName found in encounteredLoopVars
+                if (encounteredLoopVars.find(LHSVarName) != encounteredLoopVars.end()) {
+                  // llvm::errs() << "LHSVarName " << LHSVarName << " found\n";
                   isLHSLoopVariable = true;
                 }
               }
@@ -150,19 +157,26 @@ bool AffineCheckerVisitor::isAffineArithExpr(clang::Expr * InitExpr){
             if (clang::DeclRefExpr *DR = llvm::dyn_cast<clang::DeclRefExpr>(RHS)) {
               if (clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(DR->getDecl())) {
                 std::string RHSVarName = VD->getNameAsString();
-                if (encounteredLoopVars.find(RHSVarName) == encounteredLoopVars.end()) {
+                // llvm::errs() << "======================\n";
+                // llvm::errs() << "155 " << RHSVarName << "\n";
+                // for (const auto& element : encounteredLoopVars){
+                //   llvm::errs() << element << "\n";
+                // }
+                // if RHSVarName found in encounteredLoopVars
+                if (encounteredLoopVars.find(RHSVarName) != encounteredLoopVars.end()) {
                   isRHSLoopVariable = true;
                 }
               }
             }
 
             // means you have multiplication of loop variables e.g:  i * j
-            if (isRHSLoopVariable && isLHSLoopVariable) {
-              return false;
-            }
+            // if (isRHSLoopVariable && isLHSLoopVariable) {
+            //   return false;
+            // }
+            // llvm::errs() << "171 (LHS RHS) " << isLHSLoopVariable << " " << isRHSLoopVariable << "\n";
 
             // combine
-            isAffine &= LHSAffine && RHSAffine;
+            isAffine &= (LHSAffine && RHSAffine) && (!(isRHSLoopVariable && isLHSLoopVariable));
 
             break;
           }
