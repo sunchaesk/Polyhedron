@@ -360,7 +360,22 @@ bool AffineCheckerVisitor::VisitIfStmt(clang::IfStmt * ifStmt) {
 }
 
 bool AffineCheckerVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * ArraySubscriptExpr) {
+  // get the index expr
+  clang::Expr * Index = ArraySubscriptExpr->getIdx();
 
+  bool is_affine_array_subscript = isAffineArithExpr(Index);
+
+  if (!is_affine_array_subscript) {
+    llvm::errs() << "FATAL ERROR: the polyhedral compiler does not allow non-affine array accesses\n";
+
+    clang::SourceManager &SM = Context->getSourceManager();
+    clang::SourceLocation LocStart = Index->getBeginLoc();
+    clang::SourceLocation LocEnd = Index->getEndLoc();
+
+    dprintFatalError(SM, LocStart, LocEnd);
+  }
+
+  return true;
 }
 
 // DEPRECATED: using VisitArraySubscriptExpr
@@ -374,7 +389,6 @@ bool AffineCheckerVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * A
 //     return true;
 //   }
 
-//   llvm::errs() << "HIT!\n";
 
 //   if (clang::BinaryOperator *BO = llvm::dyn_cast<clang::BinaryOperator>(S)) {
 //     if (BO->isAssignmentOp()) {
