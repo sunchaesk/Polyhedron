@@ -5,7 +5,7 @@ int main() {
     int N = 10;
     for (i = 0; i < 10; i++){
         for (j = 0+10*i; j < 100; j++){
-            for (z = i * j; z < 100; z++){
+            for (z = i * N * j; z < i * j; z++){
 
             }
         }

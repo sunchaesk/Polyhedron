@@ -32,6 +32,7 @@ class AffineCheckerVisitor
     std::unordered_set<std::string> encounteredLoopVars;
 
     bool isIncrementByOne(clang::Expr *Inc);
+    bool isAffineCond(clang::Expr *Cond);
     bool isAffineInit(clang::Stmt *Init);
     bool isAffineArithExpr(clang::Expr *InitExpr);
 

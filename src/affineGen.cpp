@@ -115,6 +115,19 @@ bool AffineCheckerVisitor::isIncrementByOne(clang::Expr *Inc) {
   return false;
 }
 
+
+// NOTE:
+// it becomes a untractble problem that requires either infinite number of case catchings
+// or some ingenious recursive algorithm to make this function complete. The codebase would
+// simply have to assume that no out of the ordinary non-Affine expressions can sneak in
+// to the code base. Some examples that are non-Affine but won't be caught by the algorithm:
+// z = i * N * j
+// NOTE:
+// the checker if sees operator that is not Add, Sub, or Mul, automatically will decide
+// it is not Affine. If some expressios that are affine that uses operation that is not
+// handled by the affine checker, evaluate the expression outside of the loop definition
+// TODO: this is a compilation of the edge cases that I found. will be fixed
+// 100 * i * j -> not caught by checker
 bool AffineCheckerVisitor::isAffineArithExpr(clang::Expr * InitExpr){
   if (!InitExpr) return false;
 
@@ -243,6 +256,27 @@ bool AffineCheckerVisitor::isAffineInit(clang::Stmt *Init){
   return true;
 }
 
+// NOTE: basic idea for checking if a loop cond is affine is to check that
+// both LHS and RHS are affine
+// NOTE: only supported operations for affine condition are:
+// BO_LT, BO_LE, BO_GE, BO_GT
+bool AffineCheckerVisitor::isAffineCond(clang::Expr *Cond) {
+  Cond = Cond->IgnoreImplicit();
+
+  if (auto *BO = llvm::dyn_cast<clang::BinaryOperator>(Cond)) {
+    if (BO->getOpcode() == clang::BO_LT ||
+        BO->getOpcode() == clang::BO_LE ||
+        BO->getOpcode() == clang::BO_GT ||
+        BO->getOpcode() == clang::BO_GE) {
+      clang::Expr * LHS = BO->getLHS()->IgnoreImplicit();
+      clang::Expr * RHS = BO->getRHS()->IgnoreImplicit();
+
+      return isAffineArithExpr(LHS)  && isAffineArithExpr(RHS);
+    }
+  }
+  return false;
+}
+
 bool AffineCheckerVisitor::VisitForStmt(clang::ForStmt *forLoop) {
   clang::Stmt *Init = forLoop->getInit();
   clang::Expr *Cond = forLoop->getCond();
@@ -253,7 +287,7 @@ bool AffineCheckerVisitor::VisitForStmt(clang::ForStmt *forLoop) {
     llvm::errs() << "Error in AffineCheckerVisitor: error occurred when reading for loop init\n";
   } else {
     bool affine_init = isAffineInit(Init);
-    llvm::errs() << "227 DEBUG: " << affine_init << "\n";
+    // llvm::errs() << "227 DEBUG: " << affine_init << "\n";
     if (!affine_init){
       llvm::errs() << "FATAL ERROR: the polyhedral compilation only accepts affine loop variable init";
     }
@@ -261,6 +295,11 @@ bool AffineCheckerVisitor::VisitForStmt(clang::ForStmt *forLoop) {
 
   if (!Cond) {
     llvm::errs() << "Error in AffineCheckerVisitor: error occurred when reading for loop condition\n";
+  } else {
+    bool affine_cond = isAffineCond(Cond);
+    if (!affine_cond) {
+      llvm::errs() << "FATAL ERROR: the polyhedral compiler only accepts affine loop conditions\n";
+    }
   }
 
   if (!Inc) {
