@@ -1,15 +1,6 @@
 int main() {
-    int i;
-    int j;
-    int z;
-    int N = 10;
-    for (i = 0; i < 10; i++){
-        for (j = 0+10*i; j < 100; j++){
-            for (z = i * N * j; z < i * j; z++){
-
-            }
-        }
-    }
+    int x[5] = {0,0,0,0,0};
+    x[0] = 1;
 
     // int N = 10;
     // for (int j = 0; j < 100; j++){

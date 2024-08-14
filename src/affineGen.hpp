@@ -50,7 +50,8 @@ class AffineCheckerVisitor
     explicit AffineCheckerVisitor(clang::ASTContext * Context);
     bool VisitForStmt(clang::ForStmt *forLoop);
     bool VisitIfStmt(clang::IfStmt * ifStmt);
-    bool VisitStmt(clang::Stmt *S);
+    bool VisitArraySubscriptExpr(clang::ArraySubscriptExpr * ArraySubscriptExpr);
+    // bool VisitStmt(clang::Stmt *S); DEPRECATED
 };
 
 

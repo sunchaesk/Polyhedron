@@ -359,47 +359,56 @@ bool AffineCheckerVisitor::VisitIfStmt(clang::IfStmt * ifStmt) {
   return true;
 }
 
+bool AffineCheckerVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * ArraySubscriptExpr) {
+
+}
+
+// DEPRECATED: using VisitArraySubscriptExpr
 // NOTE: for checking statements are affine except for and if which are already handled
 // have to recursively check that all array accesses are affine accesses
 // regardless of LHS or RHS
 // NOTE: essentially (at least for now) affine array access checker
-bool AffineCheckerVisitor::VisitStmt(clang::Stmt * S) {
-  if (llvm::isa<clang::ForStmt>(S) || llvm::isa<clang::IfStmt>(S)){
-    // skip considering ForStmt & IfStmt because handled by other functions
-    return true;
-  }
+// bool AffineCheckerVisitor::VisitStmt(clang::Stmt * S) {
+//   if (llvm::isa<clang::ForStmt>(S) || llvm::isa<clang::IfStmt>(S)){
+//     // skip considering ForStmt & IfStmt because handled by other functions
+//     return true;
+//   }
 
-  if (clang::BinaryOperator *BO = llvm::dyn_cast<clang::BinaryOperator>(S)) {
-    if (BO->isAssignmentOp()) {
-      clang::Expr * LHS = BO->getLHS();
-      clang::Expr * RHS = BO->getRHS();
-      // first check that LHS has a array access bcuz if not no need to process
-      if (!llvm::dyn_cast<clang::ArraySubscriptExpr>(LHS)) {
-        return true;
-      }
+//   llvm::errs() << "HIT!\n";
 
-      // separated checking LHS and RHS for better error message
-      if (!isAffineArrayAccess(LHS)) {
-        llvm::errs() << "FATAL ERROR: the polyhedral compiler does not allow write non-affine array accesses\n";
+//   if (clang::BinaryOperator *BO = llvm::dyn_cast<clang::BinaryOperator>(S)) {
+//     if (BO->isAssignmentOp()) {
+//       clang::Expr * LHS = BO->getLHS();
+//       clang::Expr * RHS = BO->getRHS();
+//       // first check that LHS has a array access bcuz if not no need to process
+//       if (!llvm::dyn_cast<clang::ArraySubscriptExpr>(LHS)) {
+//         llvm::errs() << "LHS array access detected\n";
+//         exit(1);
+//         return true;
+//       }
 
-        clang::SourceManager &SM = Context->getSourceManager();
-        clang::SourceLocation LocStart = LHS->getBeginLoc();
-        clang::SourceLocation LocEnd = LHS->getEndLoc();
+//       // separated checking LHS and RHS for better error message
+//       if (!isAffineArrayAccess(LHS)) {
+//         llvm::errs() << "FATAL ERROR: the polyhedral compiler does not allow write non-affine array accesses\n";
 
-        dprintFatalError(SM, LocStart, LocEnd);
-      }
-      if (!isAffineArrayAccess(RHS)){
-        llvm::errs() << "FATAL ERROR: the polyhedral compiler does not allow read non-affine array accesses\n";
+//         clang::SourceManager &SM = Context->getSourceManager();
+//         clang::SourceLocation LocStart = LHS->getBeginLoc();
+//         clang::SourceLocation LocEnd = LHS->getEndLoc();
 
-        clang::SourceManager &SM = Context->getSourceManager();
-        clang::SourceLocation LocStart = RHS->getBeginLoc();
-        clang::SourceLocation LocEnd = RHS->getEndLoc();
+//         dprintFatalError(SM, LocStart, LocEnd);
+//       }
+//       if (!isAffineArrayAccess(RHS)){
+//         llvm::errs() << "FATAL ERROR: the polyhedral compiler does not allow read non-affine array accesses\n";
 
-        dprintFatalError(SM, LocStart, LocEnd);
-      }
-    }
-  }
+//         clang::SourceManager &SM = Context->getSourceManager();
+//         clang::SourceLocation LocStart = RHS->getBeginLoc();
+//         clang::SourceLocation LocEnd = RHS->getEndLoc();
+
+//         dprintFatalError(SM, LocStart, LocEnd);
+//       }
+//     }
+//   }
 
 
-  return true;
-}
+//   return true;
+// }
