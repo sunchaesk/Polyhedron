@@ -267,7 +267,9 @@ bool AffineCheckerVisitor::isAffineCond(clang::Expr *Cond) {
     if (BO->getOpcode() == clang::BO_LT ||
         BO->getOpcode() == clang::BO_LE ||
         BO->getOpcode() == clang::BO_GT ||
-        BO->getOpcode() == clang::BO_GE) {
+        BO->getOpcode() == clang::BO_GE ||
+        BO->getOpcode() == clang::BO_EQ ||
+        BO->getOpcode() == clang::BO_NE) {
       clang::Expr * LHS = BO->getLHS()->IgnoreImplicit();
       clang::Expr * RHS = BO->getRHS()->IgnoreImplicit();
 
@@ -275,6 +277,10 @@ bool AffineCheckerVisitor::isAffineCond(clang::Expr *Cond) {
     }
   }
   return false;
+}
+
+bool AffineCheckerVisitor::isAffineArrayAccess(clang::Expr * ArrayAccess) {
+  return true;
 }
 
 bool AffineCheckerVisitor::VisitForStmt(clang::ForStmt *forLoop) {
@@ -290,6 +296,12 @@ bool AffineCheckerVisitor::VisitForStmt(clang::ForStmt *forLoop) {
     // llvm::errs() << "227 DEBUG: " << affine_init << "\n";
     if (!affine_init){
       llvm::errs() << "FATAL ERROR: the polyhedral compilation only accepts affine loop variable init";
+
+      clang::SourceManager &SM = Context->getSourceManager();
+      clang::SourceLocation LocStart = Init->getBeginLoc();
+      clang::SourceLocation LocEnd = Init->getEndLoc();
+
+      dprintFatalError(SM, LocStart, LocEnd);
     }
   }
 
@@ -299,6 +311,12 @@ bool AffineCheckerVisitor::VisitForStmt(clang::ForStmt *forLoop) {
     bool affine_cond = isAffineCond(Cond);
     if (!affine_cond) {
       llvm::errs() << "FATAL ERROR: the polyhedral compiler only accepts affine loop conditions\n";
+
+      clang::SourceManager &SM = Context->getSourceManager();
+      clang::SourceLocation LocStart = Cond->getBeginLoc();
+      clang::SourceLocation LocEnd = Cond->getEndLoc();
+
+      dprintFatalError(SM, LocStart, LocEnd);
     }
   }
 
@@ -320,6 +338,68 @@ bool AffineCheckerVisitor::VisitForStmt(clang::ForStmt *forLoop) {
   if (!Body) {
     llvm::errs() << "Warning in AffineCheckerVisitor: for loop body does not have content\n";
   }
+
+  return true;
+}
+
+bool AffineCheckerVisitor::VisitIfStmt(clang::IfStmt * ifStmt) {
+  clang::Expr *Cond = ifStmt->getCond();
+
+  bool is_affine_cond = isAffineCond(Cond);
+  if (!is_affine_cond) {
+    llvm::errs() << "FATAL ERROR: the polyhedral compilation only accepts affine conditional expression in if stmt\n";
+
+    clang::SourceManager &SM = Context->getSourceManager();
+    clang::SourceLocation LocStart = ifStmt->getBeginLoc();
+    clang::SourceLocation LocEnd = ifStmt->getEndLoc();
+
+    dprintFatalError(SM, LocStart, LocEnd);
+  }
+  // the function will return true or terminate
+  return true;
+}
+
+// NOTE: for checking statements are affine except for and if which are already handled
+// have to recursively check that all array accesses are affine accesses
+// regardless of LHS or RHS
+// NOTE: essentially (at least for now) affine array access checker
+bool AffineCheckerVisitor::VisitStmt(clang::Stmt * S) {
+  if (llvm::isa<clang::ForStmt>(S) || llvm::isa<clang::IfStmt>(S)){
+    // skip considering ForStmt & IfStmt because handled by other functions
+    return true;
+  }
+
+  if (clang::BinaryOperator *BO = llvm::dyn_cast<clang::BinaryOperator>(S)) {
+    if (BO->isAssignmentOp()) {
+      clang::Expr * LHS = BO->getLHS();
+      clang::Expr * RHS = BO->getRHS();
+      // first check that LHS has a array access bcuz if not no need to process
+      if (!llvm::dyn_cast<clang::ArraySubscriptExpr>(LHS)) {
+        return true;
+      }
+
+      // separated checking LHS and RHS for better error message
+      if (!isAffineArrayAccess(LHS)) {
+        llvm::errs() << "FATAL ERROR: the polyhedral compiler does not allow write non-affine array accesses\n";
+
+        clang::SourceManager &SM = Context->getSourceManager();
+        clang::SourceLocation LocStart = LHS->getBeginLoc();
+        clang::SourceLocation LocEnd = LHS->getEndLoc();
+
+        dprintFatalError(SM, LocStart, LocEnd);
+      }
+      if (!isAffineArrayAccess(RHS)){
+        llvm::errs() << "FATAL ERROR: the polyhedral compiler does not allow read non-affine array accesses\n";
+
+        clang::SourceManager &SM = Context->getSourceManager();
+        clang::SourceLocation LocStart = RHS->getBeginLoc();
+        clang::SourceLocation LocEnd = RHS->getEndLoc();
+
+        dprintFatalError(SM, LocStart, LocEnd);
+      }
+    }
+  }
+
 
   return true;
 }

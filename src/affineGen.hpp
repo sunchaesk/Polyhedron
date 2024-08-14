@@ -35,6 +35,7 @@ class AffineCheckerVisitor
     bool isAffineCond(clang::Expr *Cond);
     bool isAffineInit(clang::Stmt *Init);
     bool isAffineArithExpr(clang::Expr *InitExpr);
+    bool isAffineArrayAccess(clang::Expr *ArrayAccess);
 
     // functions for debug/printing
     void dprintFatalError(clang::SourceManager & SM,
@@ -48,6 +49,8 @@ class AffineCheckerVisitor
   public:
     explicit AffineCheckerVisitor(clang::ASTContext * Context);
     bool VisitForStmt(clang::ForStmt *forLoop);
+    bool VisitIfStmt(clang::IfStmt * ifStmt);
+    bool VisitStmt(clang::Stmt *S);
 };
 
 
