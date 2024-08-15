@@ -215,6 +215,12 @@ CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 //The directory containing a CMake configuration file for Clang.
 Clang_DIR:PATH=/usr/local/lib/cmake/clang
 
+//Path to a file.
+ISL_INCLUDE_DIR:PATH=/usr/local/include
+
+//Path to a library.
+ISL_LIBRARY:FILEPATH=/usr/local/lib/libisl.so
+
 //The directory containing a CMake configuration file for LLVM.
 LLVM_DIR:PATH=/usr/local/lib/cmake/llvm
 
@@ -393,10 +399,16 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/usr/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//Details about finding ISL
+FIND_PACKAGE_MESSAGE_DETAILS_ISL:INTERNAL=[/usr/local/lib/libisl.so][/usr/local/include][v()]
 //Details about finding ZLIB
 FIND_PACKAGE_MESSAGE_DETAILS_ZLIB:INTERNAL=[/usr/lib64/libz.so][/usr/include][c ][v1.2.11()]
 //Details about finding zstd
 FIND_PACKAGE_MESSAGE_DETAILS_zstd:INTERNAL=[/usr/lib64/libzstd.so][/usr/include][v()]
+//ADVANCED property for variable: ISL_INCLUDE_DIR
+ISL_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: ISL_LIBRARY
+ISL_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: ZLIB_INCLUDE_DIR
 ZLIB_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: ZLIB_LIBRARY_DEBUG

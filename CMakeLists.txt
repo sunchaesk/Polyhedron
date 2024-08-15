@@ -1,21 +1,30 @@
 cmake_minimum_required(VERSION 3.10)
 project(POLYHEDRON)
 
+# Add the path to custom CMake modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
 # Find LLVM and Clang
 find_package(LLVM REQUIRED CONFIG)
 find_package(Clang REQUIRED CONFIG)
+
+# Find ISL
+find_package(ISL REQUIRED)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 message(STATUS "Found Clang ${CLANG_PACKAGE_VERSION}")
 message(STATUS "Using ClangConfig.cmake in: ${CLANG_DIR}")
+message(STATUS "Found ISL ${ISL_VERSION}")
+message(STATUS "Using ISL")
 
 # Include the necessary directories
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${CLANG_INCLUDE_DIRS})
+include_directories(${ISL_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-# all cpp files in src/
+# All cpp files in src/
 file(GLOB SOURCES "src/*.cpp")
 
 # Add executable
@@ -24,9 +33,7 @@ add_executable(polyhedron ${SOURCES})
 # Map the LLVM components to the libraries
 llvm_map_components_to_libnames(LLVM_LIBS support core irreader)
 
-target_compile_options(polyhedron PRIVATE -fno-rtti)
-
-# Link the executable with Clang and LLVM libraries
+# Link the executable with Clang, LLVM, and ISL libraries
 target_link_libraries(polyhedron
   PRIVATE
   clangAST
@@ -36,7 +43,59 @@ target_link_libraries(polyhedron
   clangSerialization
   clangTooling
   ${LLVM_LIBS}  # LLVM libraries
+  ${ISL_LIBRARY}  # ISL library
 )
+
+target_compile_options(polyhedron PRIVATE -fno-rtti)
+
+# cmake_minimum_required(VERSION 3.10)
+# project(POLYHEDRON)
+
+# # for custom ISL finding
+# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
+# # Find LLVM and Clang
+# find_package(LLVM REQUIRED CONFIG)
+# find_package(Clang REQUIRED CONFIG)
+# # Find ISL
+# find_package(ISL REQUIRED)
+
+# message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+# message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+# message(STATUS "Found Clang ${CLANG_PACKAGE_VERSION}")
+# message(STATUS "Using ClangConfig.cmake in: ${CLANG_DIR}")
+# message(STATUS "Found ISL ${ISL_VERSION}")
+# message(STATUS "Using ISLConfig.cmake in: ${ISL_DIR}")
+
+# # Include the necessary directories
+# include_directories(${LLVM_INCLUDE_DIRS})
+# include_directories(${CLANG_INCLUDE_DIRS})
+# include_directories(${ISL_INCLUDE_DIRS})
+# add_definitions(${LLVM_DEFINITIONS})
+
+# # all cpp files in src/
+# file(GLOB SOURCES "src/*.cpp")
+
+# # Add executable
+# add_executable(polyhedron ${SOURCES})
+
+# # Map the LLVM components to the libraries
+# llvm_map_components_to_libnames(LLVM_LIBS support core irreader)
+
+# target_compile_options(polyhedron PRIVATE -fno-rtti)
+
+# # Link the executable with Clang and LLVM libraries
+# target_link_libraries(polyhedron
+#   PRIVATE
+#   clangAST
+#   clangASTMatchers
+#   clangBasic
+#   clangFrontend
+#   clangSerialization
+#   clangTooling
+#   ${LLVM_LIBS}  # LLVM libraries
+#   ${ISL_LIBRARIES}
+# )
 # cmake_minimum_required(VERSION 3.10)
 # project(POLYHEDRON)
 

@@ -7,6 +7,12 @@
 #include "llvm/Support/CommandLine.h"
 #include "affineGen.hpp"
 
+#include <isl/ctx.h>
+#include <isl/set.h>
+#include <isl/map.h>
+#include <isl/space.h>
+#include <iostream>
+
 using namespace clang::tooling;
 using namespace llvm;
 
@@ -23,21 +29,29 @@ static cl::OptionCategory ToolCategory("affine-checker options");
 // };
 
 
-int main(int argc, const char **argv) {
-    // Parse command-line options
-    // CommonOptionsParser OptionsParser(argc, argv, ToolCategory);
+int main(int argc, const char ** argv) {
 
-    auto ExpectedParser = CommonOptionsParser::create(argc, argv, ToolCategory);
-    if (!ExpectedParser) {
-        llvm::errs() << ExpectedParser.takeError();
-        return 1;
-    }
+    isl_ctx * ctx = isl_ctx_alloc();
+    std::cout << "Pointer " << std::endl;
 
-    CommonOptionsParser &OptionsParser = ExpectedParser.get();
-
-    // Create a Clang Tool
-    ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
-
-    // Run the tool with our custom FrontendAction
-    return Tool.run(newFrontendActionFactory<AffineCheckerFrontendAction>().get());
+    return 1;
 }
+
+// int main(int argc, const char **argv) {
+//     // Parse command-line options
+//     // CommonOptionsParser OptionsParser(argc, argv, ToolCategory);
+
+//     auto ExpectedParser = CommonOptionsParser::create(argc, argv, ToolCategory);
+//     if (!ExpectedParser) {
+//         llvm::errs() << ExpectedParser.takeError();
+//         return 1;
+//     }
+
+//     CommonOptionsParser &OptionsParser = ExpectedParser.get();
+
+//     // Create a Clang Tool
+//     ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
+
+//     // Run the tool with our custom FrontendAction
+//     return Tool.run(newFrontendActionFactory<AffineCheckerFrontendAction>().get());
+// }
