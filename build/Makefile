@@ -292,6 +292,30 @@ src/old.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/old.cpp.s
 .PHONY : src/old.cpp.s
 
+src/polyhedralBuilder.o: src/polyhedralBuilder.cpp.o
+.PHONY : src/polyhedralBuilder.o
+
+# target to build an object file
+src/polyhedralBuilder.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/polyhedralBuilder.cpp.o
+.PHONY : src/polyhedralBuilder.cpp.o
+
+src/polyhedralBuilder.i: src/polyhedralBuilder.cpp.i
+.PHONY : src/polyhedralBuilder.i
+
+# target to preprocess a source file
+src/polyhedralBuilder.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/polyhedralBuilder.cpp.i
+.PHONY : src/polyhedralBuilder.cpp.i
+
+src/polyhedralBuilder.s: src/polyhedralBuilder.cpp.s
+.PHONY : src/polyhedralBuilder.s
+
+# target to generate assembly for a file
+src/polyhedralBuilder.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/polyhedron.dir/build.make CMakeFiles/polyhedron.dir/src/polyhedralBuilder.cpp.s
+.PHONY : src/polyhedralBuilder.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -317,6 +341,9 @@ help:
 	@echo "... src/old.o"
 	@echo "... src/old.i"
 	@echo "... src/old.s"
+	@echo "... src/polyhedralBuilder.o"
+	@echo "... src/polyhedralBuilder.i"
+	@echo "... src/polyhedralBuilder.s"
 .PHONY : help
 
 

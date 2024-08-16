@@ -34,9 +34,6 @@ static cl::OptionCategory ToolCategory("affine-checker options");
 
 
 int main(int argc, const char **argv) {
-    // Parse command-line options
-    // CommonOptionsParser OptionsParser(argc, argv, ToolCategory);
-
     auto ExpectedParser = CommonOptionsParser::create(argc, argv, ToolCategory);
     if (!ExpectedParser) {
         llvm::errs() << ExpectedParser.takeError();
@@ -45,7 +42,7 @@ int main(int argc, const char **argv) {
 
     CommonOptionsParser &OptionsParser = ExpectedParser.get();
 
-    // Create a Clang Tool
+    // run the AffineCheckerTool
     ClangTool AffineCheckerTool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
     int AffineCheckerResult = AffineCheckerTool.run(newFrontendActionFactory<AffineCheckerFrontendAction>().get());
@@ -54,4 +51,14 @@ int main(int argc, const char **argv) {
         return AffineCheckerResult;
     }
 
+    // run the PolyhedralBuilder
+    ClangTool PolyhedralBuilderTool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
+
+    int PolyhedralBuilderResult = PolyhedralBuilderTool.run(newFrontendActionFactory<PolyhedralBuilderFrontendAction>().get());
+    if (PolyhedralBuilderResult != 0) {
+        llvm::errs() << "Polyhedral Builder Failed\n";
+        return PolyhedralBuilderResult;
+    }
+
+    return 0;
 }
