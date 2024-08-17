@@ -90,6 +90,9 @@ bool AffineCheckerVisitor::isIncrementByOne(clang::Expr *Inc) {
     if (UnaryOp->getOpcode() == clang::UO_PreInc || UnaryOp->getOpcode() == clang::UO_PostInc) {
       return true;
     }
+    if (UnaryOp->getOpcode() == clang::UO_PreDec || UnaryOp->getOpcode() == clang::UO_PostDec) {
+      return true;
+    }
   } else if (auto *CompoundOp = llvm::dyn_cast<clang::CompoundAssignOperator>(Inc)) {
     if (CompoundOp->getOpcode() == clang::BO_AddAssign) {
       if (auto *RHS = llvm::dyn_cast<clang::IntegerLiteral>(CompoundOp->getRHS())) {

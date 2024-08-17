@@ -19,12 +19,31 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <vector>
+
 using namespace clang::tooling;
 using namespace llvm;
+
+struct PolyhedralLoopInfo {
+    std::string loopVar;
+    clang::Expr * loopLowerBound;
+    clang::Expr * loopUpperBound;
+    short int loopStep;
+
+    PolyhedralLoopInfo(std::string var, clang::Expr * lb, clang::Expr * ub, short int s)
+        : loopVar(var), loopLowerBound(lb), loopUpperBound(ub), loopStep(s) {}
+
+};
 
 class PolyhedralBuilderVisitor : public clang::RecursiveASTVisitor<PolyhedralBuilderVisitor> {
     private:
         clang::ASTContext * Context;
+        std::vector<PolyhedralLoopInfo> loopInfoVec;
+
+        std::string getLoopVar(clang::ForStmt *forLoop);
+        clang::Expr * getLoopLowerBound(clang::ForStmt *forLoop);
+        clang::Expr * getLoopUpperBound(clang::ForStmt *forLoop);
+        short int getLoopStep(clang::ForStmt *forLoop);
     public:
         explicit PolyhedralBuilderVisitor(clang::ASTContext * Context);
         bool VisitForStmt(clang::ForStmt *forLoop);

@@ -22,12 +22,139 @@ void PolyhedralBuilderASTConsumer::HandleTranslationUnit(clang::ASTContext & Con
 ////////////////////
 // PolyhedralBuilderVisitor
 ////////////////////
+
+/////////
+// **** PRIVATE
+/////////
+std::string PolyhedralBuilderVisitor::getLoopVar(clang::ForStmt *forLoop) {
+    if (clang::DeclStmt * declStmt = llvm::dyn_cast<clang::DeclStmt>(forLoop->getInit())) {
+        if (clang::VarDecl * var  = llvm::dyn_cast<clang::VarDecl>(declStmt->getSingleDecl())) {
+            return var->getNameAsString();
+        }
+    }
+    return NULL;
+}
+
+clang::Expr * PolyhedralBuilderVisitor::getLoopLowerBound(clang::ForStmt *forLoop) {
+    if (clang::DeclStmt * declStmt = llvm::dyn_cast<clang::DeclStmt>(forLoop->getInit())) {
+        if (clang::VarDecl * var = llvm::dyn_cast<clang::VarDecl>(declStmt->getSingleDecl())) {
+            return var->getInit();
+        }
+    }
+    return nullptr;
+}
+
+// NOTE: it is assumed that the RHS of the loop is the upper bound of the loop variable
+// TODO: make it so that the upper bound is the side of the Cond that doesn't have the loop variable
+// TODO: have the Cond to allow the loop variable side to not have just the loop variable
+// -> meaning do inverse operations to isolate the loop variable
+clang::Expr * PolyhedralBuilderVisitor::getLoopUpperBound(clang::ForStmt *forLoop) {
+    if (clang::BinaryOperator *binOp = llvm::dyn_cast<clang::BinaryOperator>(forLoop->getCond())) {
+        if (binOp->isComparisonOp()) {
+            return binOp->getRHS();
+        }
+    }
+    return nullptr;
+}
+
+// loopStep can only be values of -1 or 1
+short int PolyhedralBuilderVisitor::getLoopStep(clang::ForStmt *forLoop) {
+    if (clang::Expr * Inc = llvm::dyn_cast<clang::Expr>(forLoop->getInc())) {
+        if (auto *UnaryOp = llvm::dyn_cast<clang::UnaryOperator>(Inc)) {
+            if (UnaryOp->getOpcode() == clang::UO_PreInc || UnaryOp->getOpcode() == clang::UO_PostInc) {
+                return 1;
+            }
+            if (UnaryOp->getOpcode() == clang::UO_PreDec || UnaryOp->getOpcode() == clang::UO_PostDec) {
+                return -1;
+            }
+        } else if (auto *CompoundOp = llvm::dyn_cast<clang::CompoundAssignOperator>(Inc)) {
+            if (CompoundOp->getOpcode() == clang::BO_AddAssign) {
+                if (auto *RHS = llvm::dyn_cast<clang::IntegerLiteral>(CompoundOp->getRHS())) {
+                    if (RHS->getValue() == 1) {
+                        return 1;
+                    }
+                    if (RHS->getValue() == -1) {
+                        return -1;
+                    }
+                }
+            }
+            if (CompoundOp->getOpcode() == clang::BO_SubAssign) {
+                if (auto *RHS = llvm::dyn_cast<clang::IntegerLiteral>(CompoundOp->getRHS())) {
+                    if (RHS->getValue() == 1) {
+                        return -1;
+                    }
+                    if (RHS->getValue() == -1){
+                        return 1; // -(-1) = 1
+                    }
+                }
+            }
+        } else if (auto *BinaryOp = llvm::dyn_cast<clang::BinaryOperator>(Inc)) {
+            if (BinaryOp->getOpcode() == clang::BO_Assign) {
+                if (auto *ArithOp = llvm::dyn_cast<clang::BinaryOperator>(BinaryOp->getRHS())) {
+
+                    if (ArithOp->getOpcode() == clang::BO_Add){
+                        if (auto *RHS = llvm::dyn_cast<clang::IntegerLiteral>(ArithOp->getRHS())) {
+                            if (RHS->getValue() == 1){
+                                return 1;
+                            }
+                            if (RHS->getValue() == -1){
+                                return -1;
+                            }
+                        }
+                    }
+
+                    if (ArithOp->getOpcode() == clang::BO_Sub) {
+                        if (auto *RHS = llvm::dyn_cast<clang::IntegerLiteral>(ArithOp->getRHS())) {
+                            if (RHS->getValue() == 1){
+                                return -1;
+                            }
+                            if (RHS->getValue() == -1){
+                                return -1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return NULL;
+    }
+}
+
+/////////
+// **** PUBLIC
+/////////
+
 PolyhedralBuilderVisitor::PolyhedralBuilderVisitor(clang::ASTContext * Context)
     : Context(Context) {}
 
 
 bool PolyhedralBuilderVisitor::VisitForStmt(clang::ForStmt *forLoop) {
-    llvm::errs() << "HIT VisitForStmt\n";
+    std::string loopVar = getLoopVar(forLoop);
+    clang::Expr * lowerBound = getLoopLowerBound(forLoop);
+    clang::Expr * upperBound = getLoopUpperBound(forLoop);
+    clang::Expr * step = getLoopStep(forLoop);
+
+    if (loopVar == NULL) {
+        llvm::errs() << "FATAL ERROR POLY-BUILDER: loopVar returned as NULL\n";
+        exit(1);
+    }
+    if (lowerBound == nullptr) {
+        llvm::errs() << "FATAL ERROR POLY-BUILDER: lowerBound returned as NULL\n";
+        exit(1);
+    }
+    if (upperBound == nullptr) {
+        llvm::errs() << "FATAL ERROR POLY-BUILDER: upperBound returned as NULL\n";
+        exit(1);
+    }
+    if (step == nullptr) {
+        llvm::errs() << "FATAL ERROR POLY-BUILDER: step returned as NULL\n";
+        exit(1);
+    }
+
+    PolyhedralLoopInfo loopInfo (loopVar, lowerBound, upperBound, step);
+
+    loopInfoVec.push_back(loopInfo);
+
     return true;
 }
 
@@ -44,7 +171,10 @@ bool PolyhedralBuilderVisitor::VisitBinaryOperator(clang::BinaryOperator * BinOp
         clang::Expr * LHS = BinOp->getLHS();
         clang::Expr * RHS = BinOp->getRHS();
 
-        // llvm::errs() << "HIT VisitBinaryOperator\n";
+        // first check that LHS is an array access
+        if (!llvm::dyn_cast<clang::ArraySubscriptExpr>(LHS)) {
+            return true;
+        }
 
         // check if the assignment is part of the initialization
         if (auto *LHSDeclRef = llvm::dyn_cast<clang::DeclRefExpr>(LHS)) {
@@ -72,6 +202,7 @@ bool PolyhedralBuilderVisitor::VisitBinaryOperator(clang::BinaryOperator * BinOp
             }
         }
 
+        // NOTE: now it can be assumed that LHS has an array access
     }
 
     return true;
