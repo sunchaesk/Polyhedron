@@ -283,7 +283,7 @@ bool AffineCheckerVisitor::isAffineCond(clang::Expr *Cond) {
 }
 
 bool AffineCheckerVisitor::isAffineArrayAccess(clang::Expr * ArrayAccess) {
-  return true;
+  return isAffineArithExpr(ArrayAccess);
 }
 
 bool AffineCheckerVisitor::VisitForStmt(clang::ForStmt *forLoop) {

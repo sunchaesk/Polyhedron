@@ -27,18 +27,32 @@ void PolyhedralBuilderASTConsumer::HandleTranslationUnit(clang::ASTContext & Con
 // **** PRIVATE
 /////////
 std::string PolyhedralBuilderVisitor::getLoopVar(clang::ForStmt *forLoop) {
-    if (clang::DeclStmt * declStmt = llvm::dyn_cast<clang::DeclStmt>(forLoop->getInit())) {
-        if (clang::VarDecl * var  = llvm::dyn_cast<clang::VarDecl>(declStmt->getSingleDecl())) {
-            return var->getNameAsString();
+    clang::Stmt *Init = forLoop->getInit();
+    if (clang::BinaryOperator *BO = llvm::dyn_cast<clang::BinaryOperator>(Init)) {
+        if (BO->getOpcode() == clang::BO_Assign) {
+            // BO->dump();
+            // BO->getLHS()->dump();
+            if (clang::DeclRefExpr *var = llvm::dyn_cast<clang::DeclRefExpr>(BO->getLHS())) {
+                return var->getNameInfo().getName().getAsString();
+            }
         }
     }
+    // forLoop->dump();
+    // forLoop->getInit()->dump();
+    // if (clang::DeclStmt * declStmt = llvm::dyn_cast<clang::DeclStmt>(forLoop->getInit())) {
+    //     declStmt->dump();
+    //     if (clang::VarDecl * var  = llvm::dyn_cast<clang::VarDecl>(declStmt->getSingleDecl())) {
+    //         return var->getNameAsString();
+    //     }
+    // }
     return NULL;
 }
 
 clang::Expr * PolyhedralBuilderVisitor::getLoopLowerBound(clang::ForStmt *forLoop) {
-    if (clang::DeclStmt * declStmt = llvm::dyn_cast<clang::DeclStmt>(forLoop->getInit())) {
-        if (clang::VarDecl * var = llvm::dyn_cast<clang::VarDecl>(declStmt->getSingleDecl())) {
-            return var->getInit();
+    clang::Stmt *Init = forLoop->getInit();
+    if (clang::BinaryOperator * BO = llvm::dyn_cast<clang::BinaryOperator>(Init)) {
+        if (BO->getOpcode() == clang::BO_Assign) {
+            return BO->getRHS()->IgnoreImplicit();
         }
     }
     return nullptr;
@@ -48,13 +62,14 @@ clang::Expr * PolyhedralBuilderVisitor::getLoopLowerBound(clang::ForStmt *forLoo
 // TODO: make it so that the upper bound is the side of the Cond that doesn't have the loop variable
 // TODO: have the Cond to allow the loop variable side to not have just the loop variable
 // -> meaning do inverse operations to isolate the loop variable
-clang::Expr * PolyhedralBuilderVisitor::getLoopUpperBound(clang::ForStmt *forLoop) {
+forLoopCond PolyhedralBuilderVisitor::getLoopUpperBound(clang::ForStmt *forLoop) {
     if (clang::BinaryOperator *binOp = llvm::dyn_cast<clang::BinaryOperator>(forLoop->getCond())) {
+        forLoop->getCond()->dump();
         if (binOp->isComparisonOp()) {
-            return binOp->getRHS();
+            return forLoopCond(binOp->getRHS()->IgnoreImplicit(), binOp->getOpcode());
         }
     }
-    return nullptr;
+    return forLoopCond();
 }
 
 // loopStep can only be values of -1 or 1
@@ -116,8 +131,8 @@ short int PolyhedralBuilderVisitor::getLoopStep(clang::ForStmt *forLoop) {
                 }
             }
         }
-        return NULL;
     }
+    return 0;
 }
 
 /////////
@@ -131,29 +146,19 @@ PolyhedralBuilderVisitor::PolyhedralBuilderVisitor(clang::ASTContext * Context)
 bool PolyhedralBuilderVisitor::VisitForStmt(clang::ForStmt *forLoop) {
     std::string loopVar = getLoopVar(forLoop);
     clang::Expr * lowerBound = getLoopLowerBound(forLoop);
-    clang::Expr * upperBound = getLoopUpperBound(forLoop);
-    clang::Expr * step = getLoopStep(forLoop);
+    forLoopCond upperBound = getLoopUpperBound(forLoop);
+    short int step = getLoopStep(forLoop);
 
-    if (loopVar == NULL) {
-        llvm::errs() << "FATAL ERROR POLY-BUILDER: loopVar returned as NULL\n";
-        exit(1);
-    }
-    if (lowerBound == nullptr) {
-        llvm::errs() << "FATAL ERROR POLY-BUILDER: lowerBound returned as NULL\n";
-        exit(1);
-    }
-    if (upperBound == nullptr) {
-        llvm::errs() << "FATAL ERROR POLY-BUILDER: upperBound returned as NULL\n";
-        exit(1);
-    }
-    if (step == nullptr) {
-        llvm::errs() << "FATAL ERROR POLY-BUILDER: step returned as NULL\n";
-        exit(1);
-    }
+    llvm::errs() << "loopVar " << loopVar << "\n";
+    llvm::errs() << "lowerBound ";
+    lowerBound->dump();
+    llvm::errs() << "upperBound " << upperBound.comparatorKind << " ";
+    upperBound.forLoopCondRHS->dump();
 
     PolyhedralLoopInfo loopInfo (loopVar, lowerBound, upperBound, step);
 
     loopInfoVec.push_back(loopInfo);
+
 
     return true;
 }

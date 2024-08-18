@@ -24,13 +24,24 @@
 using namespace clang::tooling;
 using namespace llvm;
 
+struct forLoopCond {
+    clang::Expr * forLoopCondRHS;
+    enum clang::BinaryOperatorKind comparatorKind;
+
+    // default constructor
+    forLoopCond() : forLoopCondRHS(NULL), comparatorKind(clang::BO_Comma) {}
+
+    forLoopCond(clang::Expr * forLoopCondRHS, enum clang::BinaryOperatorKind comparatorKind)
+    :  forLoopCondRHS(forLoopCondRHS), comparatorKind(comparatorKind) {}
+};
+
 struct PolyhedralLoopInfo {
     std::string loopVar;
     clang::Expr * loopLowerBound;
-    clang::Expr * loopUpperBound;
+    forLoopCond loopUpperBound;
     short int loopStep;
 
-    PolyhedralLoopInfo(std::string var, clang::Expr * lb, clang::Expr * ub, short int s)
+    PolyhedralLoopInfo(std::string var, clang::Expr * lb, forLoopCond ub, short int s)
         : loopVar(var), loopLowerBound(lb), loopUpperBound(ub), loopStep(s) {}
 
 };
@@ -42,7 +53,7 @@ class PolyhedralBuilderVisitor : public clang::RecursiveASTVisitor<PolyhedralBui
 
         std::string getLoopVar(clang::ForStmt *forLoop);
         clang::Expr * getLoopLowerBound(clang::ForStmt *forLoop);
-        clang::Expr * getLoopUpperBound(clang::ForStmt *forLoop);
+        forLoopCond getLoopUpperBound(clang::ForStmt *forLoop);
         short int getLoopStep(clang::ForStmt *forLoop);
     public:
         explicit PolyhedralBuilderVisitor(clang::ASTContext * Context);
