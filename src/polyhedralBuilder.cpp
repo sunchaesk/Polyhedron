@@ -154,6 +154,7 @@ bool PolyhedralBuilderVisitor::VisitForStmt(clang::ForStmt *forLoop) {
     lowerBound->dump();
     llvm::errs() << "upperBound " << upperBound.comparatorKind << " ";
     upperBound.forLoopCondRHS->dump();
+    llvm::errs() << "step: " << step << "\n";
 
     PolyhedralLoopInfo loopInfo (loopVar, lowerBound, upperBound, step);
 
