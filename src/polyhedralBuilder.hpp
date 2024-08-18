@@ -35,6 +35,15 @@ struct forLoopCond {
     :  forLoopCondRHS(forLoopCondRHS), comparatorKind(comparatorKind) {}
 };
 
+struct PolyhedralBranchInfo {
+    clang::Expr * CondLHS;
+    clang::Expr * CondRHS;
+    enum clang::BinaryOperatorKind comparatorKind;
+
+    PolyhedralBranchInfo(clang::Expr * CondLHS, clang::Expr * CondRHS, enum clang::BinaryOperatorKind comparatorKind)
+        : CondLHS(CondLHS), CondRHS(CondRHS), comparatorKind(comparatorKind) {}
+};
+
 struct PolyhedralLoopInfo {
     std::string loopVar;
     clang::Expr * loopLowerBound;
@@ -50,11 +59,14 @@ class PolyhedralBuilderVisitor : public clang::RecursiveASTVisitor<PolyhedralBui
     private:
         clang::ASTContext * Context;
         std::vector<PolyhedralLoopInfo> loopInfoVec;
+        std::vector<PolyhedralBranchInfo> branchInfoVec;
 
         std::string getLoopVar(clang::ForStmt *forLoop);
         clang::Expr * getLoopLowerBound(clang::ForStmt *forLoop);
         forLoopCond getLoopUpperBound(clang::ForStmt *forLoop);
         short int getLoopStep(clang::ForStmt *forLoop);
+
+        void findArraySubscriptExpr(clang::Expr * expr, std::vector<clang::ArraySubscriptExpr*>& arraySubscriptExprs);
     public:
         explicit PolyhedralBuilderVisitor(clang::ASTContext * Context);
         bool VisitForStmt(clang::ForStmt *forLoop);

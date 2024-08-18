@@ -64,7 +64,6 @@ clang::Expr * PolyhedralBuilderVisitor::getLoopLowerBound(clang::ForStmt *forLoo
 // -> meaning do inverse operations to isolate the loop variable
 forLoopCond PolyhedralBuilderVisitor::getLoopUpperBound(clang::ForStmt *forLoop) {
     if (clang::BinaryOperator *binOp = llvm::dyn_cast<clang::BinaryOperator>(forLoop->getCond())) {
-        forLoop->getCond()->dump();
         if (binOp->isComparisonOp()) {
             return forLoopCond(binOp->getRHS()->IgnoreImplicit(), binOp->getOpcode());
         }
@@ -135,6 +134,26 @@ short int PolyhedralBuilderVisitor::getLoopStep(clang::ForStmt *forLoop) {
     return 0;
 }
 
+void PolyhedralBuilderVisitor::findArraySubscriptExpr(clang::Expr * expr,
+                                                      std::vector<clang::ArraySubscriptExpr*>& arraySubscriptExprs) {
+
+    if (!expr) {
+        return;
+    }
+
+    // If this is an ArraySubscriptExpr, store it
+    if (auto *arraySubscript = llvm::dyn_cast<clang::ArraySubscriptExpr>(expr)) {
+        arraySubscriptExprs.push_back(arraySubscript);
+    }
+
+    // Recursively traverse the sub-expressions
+    for (auto *child : expr->children()) {
+        if (auto *childExpr = llvm::dyn_cast<clang::Expr>(child)) {
+            findArraySubscriptExpr(childExpr, arraySubscriptExprs);
+        }
+    }
+}
+
 /////////
 // **** PUBLIC
 /////////
@@ -149,23 +168,26 @@ bool PolyhedralBuilderVisitor::VisitForStmt(clang::ForStmt *forLoop) {
     forLoopCond upperBound = getLoopUpperBound(forLoop);
     short int step = getLoopStep(forLoop);
 
-    llvm::errs() << "loopVar " << loopVar << "\n";
-    llvm::errs() << "lowerBound ";
-    lowerBound->dump();
-    llvm::errs() << "upperBound " << upperBound.comparatorKind << " ";
-    upperBound.forLoopCondRHS->dump();
-    llvm::errs() << "step: " << step << "\n";
-
     PolyhedralLoopInfo loopInfo (loopVar, lowerBound, upperBound, step);
 
-    loopInfoVec.push_back(loopInfo);
-
+    this->loopInfoVec.push_back(loopInfo);
 
     return true;
 }
 
 bool PolyhedralBuilderVisitor::VisitIfStmt(clang::IfStmt * ifStmt) {
-    llvm::errs() << "HIT VisitIfStmt\n";
+    clang::Expr * Cond = ifStmt->getCond()->IgnoreImplicit();
+    if (clang::BinaryOperator * binOp = llvm::dyn_cast<clang::BinaryOperator>(Cond)) {
+        if (binOp->isComparisonOp()) {
+            clang::Expr * LHS = binOp->getLHS()->IgnoreImplicit();
+            clang::Expr * RHS = binOp->getRHS()->IgnoreImplicit();
+
+            PolyhedralBranchInfo branchInfo (LHS, RHS, binOp->getOpcode());
+
+            this->branchInfoVec.push_back(branchInfo);
+        }
+    }
+
     return true;
 }
 
@@ -209,6 +231,10 @@ bool PolyhedralBuilderVisitor::VisitBinaryOperator(clang::BinaryOperator * BinOp
         }
 
         // NOTE: now it can be assumed that LHS has an array access
+        std::vector<clang::ArraySubscriptExpr*> arraySubscriptExprs;
+        findArraySubscriptExpr(RHS, arraySubscriptExprs);
+
+        llvm::errs() << "Found: " << arraySubscriptExprs.size() << "\n";
     }
 
     return true;
