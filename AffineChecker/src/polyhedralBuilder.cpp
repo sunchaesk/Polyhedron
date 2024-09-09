@@ -9,6 +9,10 @@ std::unique_ptr<clang::ASTConsumer> PolyhedralBuilderFrontendAction::CreateASTCo
     return std::make_unique<PolyhedralBuilderASTConsumer>(&CI.getASTContext());
 }
 
+void PolyhedralBuilderFrontendAction::EndSourceFileAction() {
+    return;
+}
+
 ////////////////////
 // PolyhedralBuilderASTConsumer
 ////////////////////
@@ -17,6 +21,10 @@ PolyhedralBuilderASTConsumer::PolyhedralBuilderASTConsumer(clang::ASTContext * C
 
 void PolyhedralBuilderASTConsumer::HandleTranslationUnit(clang::ASTContext & Context) {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
+}
+
+const PolyhedralBuilderVisitor& PolyhedralBuilderASTConsumer::getVisitor() const {
+    return Visitor;
 }
 
 ////////////////////
@@ -161,6 +169,13 @@ void PolyhedralBuilderVisitor::findArraySubscriptExpr(clang::Expr * expr,
 PolyhedralBuilderVisitor::PolyhedralBuilderVisitor(clang::ASTContext * Context)
     : Context(Context) {}
 
+const std::vector<PolyhedralLoopInfo>& PolyhedralBuilderVisitor::getLoopInfoVec() const {
+    return loopInfoVec;
+}
+
+const std::vector<PolyhedralBranchInfo>& PolyhedralBuilderVisitor::getBranchInfoVec() const {
+    return branchInfoVec;
+}
 
 bool PolyhedralBuilderVisitor::VisitForStmt(clang::ForStmt *forLoop) {
     std::string loopVar = getLoopVar(forLoop);

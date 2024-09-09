@@ -72,6 +72,9 @@ class PolyhedralBuilderVisitor : public clang::RecursiveASTVisitor<PolyhedralBui
         bool VisitForStmt(clang::ForStmt *forLoop);
         bool VisitIfStmt(clang::IfStmt *ifStmt);
         bool VisitBinaryOperator(clang::BinaryOperator *BinOp);
+
+        const std::vector<PolyhedralLoopInfo>& getLoopInfoVec() const;
+        const std::vector<PolyhedralBranchInfo>& getBranchInfoVec() const;
         // bool VisitStmt(clang::Stmt * Stmt);
         // bool VisitArraySubscriptExpr(clang::ArraySubscriptExpr * ArraySubscriptExpr);
 };
@@ -80,6 +83,7 @@ class PolyhedralBuilderASTConsumer : public clang::ASTConsumer {
     public:
         explicit PolyhedralBuilderASTConsumer(clang::ASTContext * Context);
         void HandleTranslationUnit(clang::ASTContext &Context) override;
+        const PolyhedralBuilderVisitor& getVisitor() const;
     private:
         PolyhedralBuilderVisitor Visitor;
 };
@@ -90,5 +94,6 @@ class PolyhedralBuilderFrontendAction : public clang::ASTFrontendAction {
                                                               llvm::StringRef InFile) override;
 
         void EndSourceFileAction() override;
-
+    private:
+};
 #endif
